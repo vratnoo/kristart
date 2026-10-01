@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Shapes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Young+Serif&display=swap">
+<style>
+/* Layout: one centred column. Name and star tally on top, a tab row, then one bordered "stage" where each game runs; Learn reads as ruled sections. Shapes follow the Montessori grammar symbols. */
+:root{
+  --paper:#F2F4F7; --surface:#FFFFFF; --ink:#17191E; --on-ink:#FFFFFF; --muted:#596170; --line:#D6DBE3;
+  --noun:#17191E; --verb:#D33A2C; --adj:#2347A3; --good:#1D7A4B; --bad:#C2410C; --star:#B7791F;
+  --display:"Young Serif", Georgia, "Times New Roman", serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111318; --surface:#1A1D24; --ink:#ECEEF2; --on-ink:#111318; --muted:#9DA5B4; --line:#2F3540;
+    --noun:#ECEEF2; --verb:#FF6B5B; --adj:#86A6FF; --good:#4FC48C; --bad:#FB923C; --star:#F2C14E;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111318; --surface:#1A1D24; --ink:#ECEEF2; --on-ink:#111318; --muted:#9DA5B4; --line:#2F3540;
+  --noun:#ECEEF2; --verb:#FF6B5B; --adj:#86A6FF; --good:#4FC48C; --bad:#FB923C; --star:#F2C14E;
+  color-scheme:dark;
+}
+
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.55}
+.wrap{max-width:52rem;margin:0 auto;padding-inline:16px;padding-block:24px 56px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.8rem,5vw,2.4rem)}
+h2{font-size:clamp(1.4rem,4vw,1.75rem)}
+h3{font-size:1.25rem}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--adj);outline-offset:2px}
+
+/* Shapes */
+.sym{display:block;flex:none}
+.sym.n{width:22px;height:19px;background:var(--noun);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.sym.j{width:15px;height:13px;background:var(--adj);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.sym.v{width:19px;height:19px;border-radius:50%;background:var(--verb)}
+
+/* Header */
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.brand{display:flex;align-items:center;gap:14px}
+.marks{display:flex;align-items:flex-end;gap:5px;padding-bottom:6px}
+.tagline{color:var(--muted)}
+.tally{display:flex;flex-direction:column;align-items:flex-end}
+.tally-num{font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.tally-num::before{content:"★ ";color:var(--star)}
+.tally-label{font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);overflow-x:auto}
+.tab{background:none;border:0;padding:.6rem .9rem;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1.5px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tab:hover{color:var(--ink)}
+
+section.panel{display:flex;flex-direction:column;gap:16px}
+.game-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.game-head > div{min-width:0;max-width:34rem}
+.game-head p{color:var(--muted)}
+
+/* Segmented control */
+.seg{display:inline-flex;flex-wrap:wrap;gap:2px;border:1.5px solid var(--line);border-radius:14px;padding:3px;background:var(--surface)}
+.seg button{border:0;background:none;padding:.4rem .85rem;border-radius:10px;font-weight:700;font-size:.92rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+
+/* Stage */
+.stage{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:clamp(16px,4vw,28px);display:flex;flex-direction:column;gap:18px}
+.status{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dot.now{background:var(--ink)}
+.dot.good{background:var(--good)}
+.dot.bad{background:var(--bad)}
+.prompt{font-size:1.1rem;font-weight:700}
+
+/* Sentence chips */
+.sentence{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 6px;padding-block:6px}
+.tok{display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.slot{height:20px;display:flex;align-items:flex-end;justify-content:center}
+.row{display:flex;align-items:baseline}
+.punct{font-size:1.3rem;padding-left:1px}
+.word{font-size:1.3rem;font-family:var(--body);background:var(--paper);border:2px solid var(--line);border-radius:9px;padding:.2em .5em;line-height:1.3}
+button.word:hover{border-color:var(--muted)}
+.word[data-tag="n"]{border-color:var(--noun)}
+.word[data-tag="v"]{border-color:var(--verb)}
+.word[data-tag="j"]{border-color:var(--adj)}
+.word.wrong{border-style:dashed;border-color:var(--bad)}
+.cap{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--bad);font-weight:700;min-height:1.1em}
+.sentence.static .cap{display:none}
+
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tool{display:inline-flex;align-items:center;gap:8px;padding:.45rem .9rem;border-radius:999px;border:2px solid var(--line);background:var(--paper);font-weight:700}
+.tool[aria-pressed="true"]{border-color:var(--ink);background:var(--surface)}
+
+/* Word cards and choices */
+.card{display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:8px 4px}
+.card-label{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.bigword{font-family:var(--display);font-size:clamp(2.3rem,9vw,3.4rem);line-height:1.1;text-align:center;overflow-wrap:anywhere}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));gap:8px}
+.choice{padding:.8rem .6rem;border-radius:12px;border:2px solid var(--line);background:var(--paper);font-weight:700;font-size:1.05rem}
+.choice:hover:not(:disabled){border-color:var(--muted)}
+.choice:disabled{cursor:default}
+.choice.correct{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--surface));color:var(--ink)}
+.choice.incorrect{border-color:var(--bad);border-style:dashed;background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+
+.feedback{min-height:1.55em;font-weight:700;max-width:40rem}
+.feedback.good{color:var(--good)}
+.feedback.bad{color:var(--bad)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{background:var(--ink);color:var(--on-ink);border:2px solid var(--ink);border-radius:999px;padding:.65rem 1.4rem;font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--muted)}
+
+/* End screen */
+.end{align-items:center;text-align:center;padding-block:36px}
+.stars{font-size:2.6rem;letter-spacing:.15em;color:var(--line)}
+.stars .on{color:var(--star)}
+.end p{color:var(--muted);max-width:30rem}
+
+/* Learn */
+.lesson{display:flex;flex-direction:column;gap:12px;padding-block:20px;border-top:1.5px solid var(--line)}
+.lesson:first-of-type{border-top:0;padding-top:4px}
+.lesson > p{max-width:40rem}
+.lesson-title{display:flex;align-items:center;gap:10px}
+.kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:10px}
+.kind{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.kind b{display:block;font-family:var(--display);font-weight:400;font-size:1.1rem}
+.kind span{color:var(--muted);font-size:.92rem}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:30rem;font-size:.95rem}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+td em{font-style:normal;font-weight:700}
+.note{color:var(--muted);font-size:.92rem}
+
+@media (prefers-reduced-motion: no-preference){
+  .word,.choice,.tool{transition:border-color .15s,background-color .15s}
+  .slot .sym{animation:pop .22s ease-out}
+  @keyframes pop{from{transform:scale(.3);opacity:.2}to{transform:scale(1);opacity:1}}
+}
+</style>
+</head>
+<body style="margin:0">
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="marks" aria-hidden="true"><span class="sym n"></span><span class="sym v"></span><span class="sym j"></span></div>
+      <div>
+        <h1>Word Shapes</h1>
+        <p class="tagline">English grammar, one shape at a time</p>
+      </div>
+    </div>
+    <div class="tally">
+      <span class="tally-num" id="tally">0 / 15</span>
+      <span class="tally-label">Best stars earned</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-learn" data-tab="learn" aria-controls="learn">Learn</button>
+    <button class="tab" role="tab" id="tab-hunt" data-tab="hunt" aria-controls="hunt">Noun Hunt</button>
+    <button class="tab" role="tab" id="tab-sort" data-tab="sort" aria-controls="sort">Sort the Nouns</button>
+    <button class="tab" role="tab" id="tab-plurals" data-tab="plurals" aria-controls="plurals">Plurals</button>
+  </nav>
+
+  <!-- LEARN -->
+  <section class="panel" id="learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
+    <div class="lesson">
+      <div class="lesson-title"><span class="sym n" aria-hidden="true"></span><h2>A noun names something</h2></div>
+      <p>A noun is a word for a <strong>person, place, thing or idea</strong>. Here every noun gets a big black triangle. That is the Montessori grammar symbol for a noun: solid and steady, like a pyramid.</p>
+      <div class="sentence static" data-static="The teacher|n opened|v a heavy|j book|n in the library|n." data-all="0"></div>
+      <p class="note">Ask yourself: can I put <em>a</em>, <em>an</em> or <em>the</em> in front of it? If yes, it is probably a noun.</p>
+      <div class="actions"><button class="btn" data-go="hunt" data-mode="n">Play Noun Hunt</button></div>
+    </div>
+
+    <div class="lesson">
+      <h2>Four kinds of naming</h2>
+      <p>Some nouns you can see and touch. Others, like <em>courage</em>, you cannot touch at all, but they are still nouns.</p>
+      <div class="kinds">
+        <div class="kind"><b>Person</b><span>teacher, Priya, pilot, baby</span></div>
+        <div class="kind"><b>Place</b><span>library, beach, India, park</span></div>
+        <div class="kind"><b>Thing</b><span>pencil, kite, apple, chair</span></div>
+        <div class="kind"><b>Idea</b><span>love, courage, joy, freedom</span></div>
+      </div>
+      <div class="actions"><button class="btn" data-go="sort" data-mode="kind">Play the sorting game</button></div>
+    </div>
+
+    <div class="lesson">
+      <h2>Common and proper nouns</h2>
+      <p>A <strong>common noun</strong> names any one of a kind: <em>city</em>, <em>river</em>, <em>boy</em>. A <strong>proper noun</strong> names one particular one: <em>London</em>, <em>Ganges</em>, <em>Arjun</em>. Proper nouns always start with a capital letter.</p>
+      <div class="actions"><button class="btn" data-go="sort" data-mode="proper">Play Common or Proper</button></div>
+    </div>
+
+    <div class="lesson">
+      <h2>One or many</h2>
+      <p>A <strong>singular</strong> noun means one. A <strong>plural</strong> noun means more than one. Most nouns add <em>-s</em>, but some follow other patterns.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pattern</th><th>Rule</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Most nouns</td><td>add <em>-s</em></td><td>cat → cats</td></tr>
+            <tr><td>Ends in s, x, ch, sh</td><td>add <em>-es</em></td><td>box → boxes</td></tr>
+            <tr><td>Consonant + y</td><td>y becomes <em>-ies</em></td><td>baby → babies</td></tr>
+            <tr><td>Vowel + y</td><td>add <em>-s</em></td><td>toy → toys</td></tr>
+            <tr><td>Ends in f or fe</td><td>often becomes <em>-ves</em></td><td>leaf → leaves</td></tr>
+            <tr><td>Irregular</td><td>learn by heart</td><td>child → children, mouse → mice</td></tr>
+            <tr><td>No change</td><td>same for one or many</td><td>sheep → sheep</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="actions"><button class="btn" data-go="plurals">Play Plurals</button></div>
+    </div>
+
+    <div class="lesson">
+      <h2>A noun's two best friends</h2>
+      <p><span class="sym v" style="display:inline-block;vertical-align:-3px" aria-hidden="true"></span> A <strong>verb</strong> is a red circle, like a ball that rolls. It tells what someone does or is: <em>jumped</em>, <em>sings</em>, <em>is</em>.</p>
+      <p><span class="sym j" style="display:inline-block;vertical-align:-1px" aria-hidden="true"></span> An <strong>adjective</strong> is a smaller blue triangle that leans on the noun. It describes the noun: <em>quick</em>, <em>red</em>, <em>lazy</em>.</p>
+      <div class="sentence static" data-static="The quick|j fox|n jumped|v over the lazy|j dog|n." data-all="1"></div>
+      <p class="note">Small words like <em>the</em>, <em>a</em>, <em>over</em>, <em>my</em> and <em>very</em> get no shape in this game.</p>
+      <div class="actions"><button class="btn" data-go="hunt" data-mode="all">Play with all three shapes</button></div>
+    </div>
+  </section>
+
+  <!-- HUNT -->
+  <section class="panel" id="hunt" role="tabpanel" aria-labelledby="tab-hunt" hidden>
+    <div class="game-head">
+      <div>
+        <h2>Noun Hunt</h2>
+        <p>A noun names a person, place, thing or idea. Find them in each sentence.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Level">
+        <button type="button" data-level="n" aria-pressed="true">Nouns only</button>
+        <button type="button" data-level="all" aria-pressed="false">All three shapes</button>
+      </div>
+    </div>
+    <div class="stage" id="hunt-stage">
+      <div class="status"><span id="hunt-count">Sentence 1 of 8</span><div class="dots" id="hunt-dots"></div></div>
+      <p class="prompt" id="hunt-prompt">Tap every noun in the sentence.</p>
+      <div class="tools" id="hunt-tools" role="group" aria-label="Shape to place" hidden>
+        <button type="button" class="tool" data-tool="n" aria-pressed="true"><span class="sym n" aria-hidden="true"></span>Noun</button>
+        <button type="button" class="tool" data-tool="v" aria-pressed="false"><span class="sym v" aria-hidden="true"></span>Verb</button>
+        <button type="button" class="tool" data-tool="j" aria-pressed="false"><span class="sym j" aria-hidden="true"></span>Adjective</button>
+      </div>
+      <div class="sentence" id="hunt-sentence"></div>
+      <p class="feedback" id="hunt-feedback" aria-live="polite"></p>
+      <div class="actions">
+        <button type="button" class="btn" id="hunt-go">Check</button>
+        <button type="button" class="btn ghost speak" id="hunt-say" hidden>Hear the sentence</button>
+      </div>
+    </div>
+    <div class="stage end" id="hunt-end" hidden></div>
+  </section>
+
+  <!-- SORT -->
+  <section class="panel" id="sort" role="tabpanel" aria-labelledby="tab-sort" hidden>
+    <div class="game-head">
+      <div>
+        <h2>Sort the Nouns</h2>
+        <p>Decide what each noun names, or whether it needs a capital letter.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Game">
+        <button type="button" data-sort="kind" aria-pressed="true">Person, place, thing, idea</button>
+        <button type="button" data-sort="proper" aria-pressed="false">Common or proper</button>
+      </div>
+    </div>
+    <div class="stage" id="sort-stage">
+      <div class="status"><span id="sort-count">Word 1 of 10</span><div class="dots" id="sort-dots"></div></div>
+      <p class="prompt" id="sort-prompt"></p>
+      <div class="card"><span class="card-label" id="sort-label">Noun</span><div class="bigword" id="sort-word"></div></div>
+      <div class="choices" id="sort-choices"></div>
+      <p class="feedback" id="sort-feedback" aria-live="polite"></p>
+      <div class="actions">
+        <button type="button" class="btn" id="sort-next" hidden>Next word</button>
+        <button type="button" class="btn ghost speak" id="sort-say" hidden>Hear the word</button>
+      </div>
+    </div>
+    <div class="stage end" id="sort-end" hidden></div>
+  </section>
+
+  <!-- PLURALS -->
+  <section class="panel" id="plurals" role="tabpanel" aria-labelledby="tab-plurals" hidden>
+    <div class="game-head">
+      <div>
+        <h2>Plurals</h2>
+        <p>Turn one into many. Watch out for the tricky ones.</p>
+      </div>
+    </div>
+    <div class="stage" id="plural-stage">
+      <div class="status"><span id="plural-count">Word 1 of 10</span><div class="dots" id="plural-dots"></div></div>
+      <p class="prompt">Which word means more than one?</p>
+      <div class="card"><span class="card-label">One</span><div class="bigword" id="plural-word"></div></div>
+      <div class="choices" id="plural-choices"></div>
+      <p class="feedback" id="plural-feedback" aria-live="polite"></p>
+      <div class="actions">
+        <button type="button" class="btn" id="plural-next" hidden>Next word</button>
+        <button type="button" class="btn ghost speak" id="plural-say" hidden>Hear the word</button>
+      </div>
+    </div>
+    <div class="stage end" id="plural-end" hidden></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ---------- Data ----------
+  const HUNT = [
+    "Maya|n fed|v her hungry|j cat|n in the kitchen|n.",
+    "The tall|j giraffe|n ate|v green|j leaves|n.",
+    "My brother|n plays|v football|n on Sunday|n.",
+    "Paris|n is|v a beautiful|j city|n.",
+    "The children|n sang|v loud|j songs|n at school|n.",
+    "A brave|j firefighter|n saved|v the little|j kitten|n.",
+    "Grandma|n baked|v a warm|j pie|n for dinner|n.",
+    "The river|n flows|v past our quiet|j village|n.",
+    "Ravi|n wrote|v a long|j letter|n to his friend|n.",
+    "Happiness|n filled|v the busy|j classroom|n.",
+    "Bright|j stars|n shine|v over the dark|j ocean|n.",
+    "Our dog|n sleeps|v under the wooden|j table|n.",
+    "Lena|n bought|v fresh|j apples|n at the market|n.",
+    "The old|j clock|n ticks|v in the hallway|n.",
+    "Courage|n helped|v the young|j sailor|n.",
+    "Birds|n build|v small|j nests|n in spring|n.",
+    "The quick|j fox|n jumped|v over the lazy|j dog|n.",
+    "Tokyo|n has|v crowded|j trains|n.",
+    "Anil|n kicked|v the red|j ball|n into the garden|n.",
+    "The hungry|j monkey|n grabbed|v a ripe|j banana|n."
+  ];
+
+  const KINDS = {
+    person: { label: "Person", hint: "someone, or the job someone does", words: ["teacher","doctor","baby","pilot","aunt","farmer","Priya","Rahul"] },
+    place:  { label: "Place",  hint: "somewhere you can go or be",        words: ["library","beach","park","India","kitchen","airport","village"] },
+    thing:  { label: "Thing",  hint: "something you can see or touch",    words: ["pencil","bicycle","apple","umbrella","chair","kite","phone"] },
+    idea:   { label: "Idea",   hint: "a feeling or idea you cannot touch", words: ["love","honesty","freedom","fear","friendship","courage","joy"] }
+  };
+
+  // [common noun, proper noun, what it is]
+  const PROPER = [
+    ["city","London","city"], ["river","Ganges","river"], ["boy","Arjun","boy"], ["girl","Meera","girl"],
+    ["day","Monday","day of the week"], ["month","July","month"], ["country","Japan","country"],
+    ["dog","Bruno","dog"], ["planet","Mars","planet"], ["mountain","Everest","mountain"],
+    ["festival","Diwali","festival"], ["ocean","Pacific","ocean"]
+  ];
+
+  const RULES = {
+    s:   "Most nouns just add -s.",
+    es:  "Nouns ending in s, x, ch or sh add -es.",
+    ies: "Consonant + y: change the y to i and add -es.",
+    ys:  "Vowel + y: just add -s.",
+    ves: "Many nouns ending in f or fe change to -ves.",
+    oes: "Some nouns ending in o add -es.",
+    irr: "This one is irregular. It changes inside the word, so learn it by heart.",
+    same:"This noun stays the same for one or many."
+  };
+
+  // [singular, plural, wrong, wrong, rule]
+  const PLURALS = [
+    ["cat","cats","cates","caties","s"], ["book","books","bookes","bookies","s"],
+    ["box","boxes","boxs","boxies","es"], ["bus","buses","buss","busies","es"],
+    ["church","churches","churchs","churchies","es"], ["dish","dishes","dishs","dishies","es"],
+    ["baby","babies","babys","babyes","ies"], ["city","cities","citys","cityes","ies"],
+    ["toy","toys","toies","toyes","ys"], ["day","days","daies","dayes","ys"],
+    ["leaf","leaves","leafs","leafes","ves"], ["knife","knives","knifes","knifies","ves"],
+    ["wolf","wolves","wolfs","wolfes","ves"], ["child","children","childs","childrens","irr"],
+    ["mouse","mice","mouses","mices","irr"], ["tooth","teeth","tooths","teeths","irr"],
+    ["foot","feet","foots","feets","irr"], ["man","men","mans","mens","irr"],
+    ["woman","women","womans","womens","irr"], ["goose","geese","gooses","geeses","irr"],
+    ["sheep","sheep","sheeps","sheepes","same"], ["deer","deer","deers","deeres","same"],
+    ["potato","potatoes","potatos","potatoies","oes"], ["hero","heroes","heros","heroies","oes"]
+  ];
+
+  const NAMES = { n: "noun", v: "verb", j: "adjective" };
+  const GAMES = { "hunt-n": "Noun Hunt", "hunt-all": "All three shapes", "sort-kind": "Person, place, thing, idea", "sort-proper": "Common or proper", "plural": "Plurals" };
+  const H_ROUNDS = 8, S_ROUNDS = 10, P_ROUNDS = 10;
+
+  // ---------- Helpers ----------
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const q = (w) => "“" + w + "”";
+  const article = (w) => (/^[aeiou]/i.test(w) ? "an " : "a ") + w;
+
+  function parse(s) {
+    return s.split(" ").map((raw) => {
+      const m = raw.match(/^([^|.,!?]+)(?:\|([nvj]))?([.,!?]*)$/);
+      return { text: m[1], tag: m[2] || null, punct: m[3] || "" };
+    });
+  }
+  const symHTML = (tag) => (tag ? `<span class="sym ${tag}" aria-hidden="true"></span>` : "");
+
+  const KEY = "wordshapes.v1";
+  let store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { store = {}; }
+  store.best = store.best || {};
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+
+  function updateTally() {
+    let total = 0;
+    for (const k in GAMES) total += (store.best[k] && store.best[k].stars) || 0;
+    $("#tally").textContent = `${total} / ${Object.keys(GAMES).length * 3}`;
+  }
+
+  function dots(el, total, results, current) {
+    el.innerHTML = "";
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement("span");
+      d.className = "dot" + (results[i] === true ? " good" : results[i] === false ? " bad" : i === current ? " now" : "");
+      el.appendChild(d);
+    }
+  }
+
+  const starsFor = (s, t) => { const r = s / t; return r >= 0.9 ? 3 : r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0; };
+
+  function finish(stageEl, endEl, key, score, total, unit, replay) {
+    const stars = starsFor(score, total);
+    const prev = store.best[key];
+    const isBest = !prev || score / total > prev.score / prev.total;
+    if (isBest) { store.best[key] = { stars, score, total }; persist(); updateTally(); }
+    const head = ["Keep practising", "Getting there", "Good job", "Excellent work"][stars];
+    let extra = "";
+    if (prev && isBest) extra = " That is a new personal best.";
+    else if (prev) extra = ` Your best is ${prev.score} of ${prev.total}.`;
+    endEl.innerHTML = `
+      <p class="card-label">${GAMES[key]}</p>
+      <div class="stars" role="img" aria-label="${stars} of 3 stars">${[0,1,2].map(i => `<span class="${i < stars ? "on" : ""}">★</span>`).join("")}</div>
+      <h2>${head}</h2>
+      <p>You got ${score} of ${total} ${unit} right.${extra}</p>
+      <div class="actions"><button type="button" class="btn">Play again</button></div>`;
+    endEl.querySelector(".btn").addEventListener("click", replay);
+    stageEl.hidden = true;
+    endEl.hidden = false;
+    endEl.querySelector(".btn").focus();
+  }
+
+  const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance === "function";
+  function say(text) {
+    if (!canSpeak) return;
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-GB"; u.rate = 0.9;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  if (canSpeak) $$(".speak").forEach((b) => (b.hidden = false));
+
+  // ---------- Static example sentences ----------
+  function tokHTML(t, tag, i, interactive) {
+    const word = interactive
+      ? `<button type="button" class="word" data-i="${i}" aria-pressed="false">${t.text}</button>`
+      : `<span class="word" data-tag="${tag || ""}">${t.text}</span>`;
+    return `<span class="tok"><span class="slot">${symHTML(tag)}</span><span class="row">${word}${t.punct ? `<span class="punct">${t.punct}</span>` : ""}</span><span class="cap"></span></span>`;
+  }
+  $$(".sentence.static").forEach((el) => {
+    const all = el.dataset.all === "1";
+    el.innerHTML = parse(el.dataset.static).map((t, i) => tokHTML(t, all ? t.tag : (t.tag === "n" ? "n" : null), i, false)).join("");
+  });
+
+  // ---------- Noun Hunt ----------
+  const H = { level: "n", tool: "n", deck: [], i: 0, score: 0, results: [], tags: new Map(), checked: false, tokens: [] };
+  const huntBox = $("#hunt-sentence");
+  const expected = (t) => (H.level === "n" ? (t.tag === "n" ? "n" : null) : t.tag);
+
+  function huntStart() {
+    H.deck = shuffle(HUNT).slice(0, H_ROUNDS);
+    H.i = 0; H.score = 0; H.results = [];
+    $("#hunt-end").hidden = true; $("#hunt-stage").hidden = false;
+    huntRound();
+  }
+
+  function huntRound() {
+    H.tags = new Map(); H.checked = false;
+    H.tokens = parse(H.deck[H.i]);
+    $("#hunt-count").textContent = `Sentence ${H.i + 1} of ${H_ROUNDS} · Score ${H.score}`;
+    dots($("#hunt-dots"), H_ROUNDS, H.results, H.i);
+    $("#hunt-prompt").textContent = H.level === "n"
+      ? "Tap every noun in the sentence."
+      : "Pick a shape, then tap each word that gets it. Tap again to remove it.";
+    $("#hunt-tools").hidden = H.level === "n";
+    paintTools();
+    huntBox.innerHTML = H.tokens.map((t, i) => tokHTML(t, null, i, true)).join("");
+    const fb = $("#hunt-feedback"); fb.textContent = ""; fb.className = "feedback";
+    $("#hunt-go").textContent = "Check";
+  }
+
+  function paintTools() {
+    $$("#hunt-tools .tool").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tool === H.tool)));
+  }
+
+  function paintWord(i) {
+    const tok = huntBox.children[i];
+    const btn = tok.querySelector(".word");
+    const tag = H.tags.get(i) || null;
+    tok.querySelector(".slot").innerHTML = symHTML(tag);
+    btn.dataset.tag = tag || "";
+    btn.setAttribute("aria-pressed", String(!!tag));
+    btn.setAttribute("aria-label", H.tokens[i].text + (tag ? `, marked ${NAMES[tag]}` : ""));
+  }
+
+  huntBox.addEventListener("click", (e) => {
+    const b = e.target.closest(".word");
+    if (!b || H.checked) return;
+    const i = +b.dataset.i;
+    const tool = H.level === "n" ? "n" : H.tool;
+    if (H.tags.get(i) === tool) H.tags.delete(i); else H.tags.set(i, tool);
+    paintWord(i);
+  });
+
+  $("#hunt-tools").addEventListener("click", (e) => {
+    const b = e.target.closest(".tool");
+    if (!b) return;
+    H.tool = b.dataset.tool; paintTools();
+  });
+
+  function huntCheck() {
+    H.checked = true;
+    const wrong = []; let nouns = 0;
+    H.tokens.forEach((t, i) => {
+      const e = expected(t), g = H.tags.get(i) || null;
+      const tok = huntBox.children[i], btn = tok.querySelector(".word");
+      if (e === "n") nouns++;
+      tok.querySelector(".slot").innerHTML = symHTML(e);
+      btn.dataset.tag = e || "";
+      btn.setAttribute("aria-disabled", "true");
+      if (e !== g) {
+        btn.classList.add("wrong");
+        tok.querySelector(".cap").textContent = e ? NAMES[e] : "no shape";
+        wrong.push(`${q(t.text)} ${e ? "is " + article(NAMES[e]) : "gets no shape"}`);
+      }
+    });
+    const ok = wrong.length === 0;
+    if (ok) H.score++;
+    H.results[H.i] = ok;
+    dots($("#hunt-dots"), H_ROUNDS, H.results, -1);
+    $("#hunt-count").textContent = `Sentence ${H.i + 1} of ${H_ROUNDS} · Score ${H.score}`;
+    const fb = $("#hunt-feedback");
+    fb.className = "feedback " + (ok ? "good" : "bad");
+    fb.textContent = ok
+      ? (H.level === "n" ? `Perfect. You found all ${nouns} nouns.` : "Perfect. Every shape is in the right place.")
+      : `Not quite. ${wrong.join("; ")}.`;
+    $("#hunt-go").textContent = H.i + 1 < H_ROUNDS ? "Next sentence" : "See my score";
+  }
+
+  $("#hunt-go").addEventListener("click", () => {
+    if (!H.checked) return huntCheck();
+    H.i++;
+    if (H.i >= H_ROUNDS) finish($("#hunt-stage"), $("#hunt-end"), H.level === "n" ? "hunt-n" : "hunt-all", H.score, H_ROUNDS, "sentences", huntStart);
+    else huntRound();
+  });
+  $("#hunt-say").addEventListener("click", () => say(H.tokens.map((t) => t.text + t.punct).join(" ")));
+
+  function setHuntLevel(level) {
+    H.level = level; H.tool = "n";
+    $$("#hunt [data-level]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.level === level)));
+    huntStart();
+  }
+  $$("#hunt [data-level]").forEach((b) => b.addEventListener("click", () => setHuntLevel(b.dataset.level)));
+
+  // ---------- Sort the Nouns ----------
+  const S = { mode: "kind", deck: [], i: 0, score: 0, results: [], answered: false };
+
+  function sortStart() {
+    const all = [];
+    if (S.mode === "kind") {
+      for (const k in KINDS) KINDS[k].words.forEach((w) => all.push({ w, k }));
+    } else {
+      PROPER.forEach(([c, p, label]) => {
+        all.push({ w: c, show: c, proper: false, label });
+        all.push({ w: p.toLowerCase(), show: p, proper: true, label });
+      });
+    }
+    S.deck = shuffle(all).slice(0, S_ROUNDS);
+    S.i = 0; S.score = 0; S.results = [];
+    $("#sort-end").hidden = true; $("#sort-stage").hidden = false;
+    sortRound();
+  }
+
+  function sortRound() {
+    S.answered = false;
+    const it = S.deck[S.i];
+    $("#sort-count").textContent = `Word ${S.i + 1} of ${S_ROUNDS} · Score ${S.score}`;
+    dots($("#sort-dots"), S_ROUNDS, S.results, S.i);
+    $("#sort-prompt").textContent = S.mode === "kind"
+      ? "Does this noun name a person, a place, a thing or an idea?"
+      : "Is this a common noun or a proper noun? (Capital letters are hidden.)";
+    $("#sort-label").textContent = "Noun";
+    $("#sort-word").textContent = it.w;
+    const opts = S.mode === "kind"
+      ? Object.keys(KINDS).map((k) => [k, KINDS[k].label])
+      : [["common", "Common noun"], ["proper", "Proper noun"]];
+    $("#sort-choices").innerHTML = opts.map(([v, l]) => `<button type="button" class="choice" data-v="${v}">${l}</button>`).join("");
+    const fb = $("#sort-feedback"); fb.textContent = ""; fb.className = "feedback";
+    $("#sort-next").hidden = true;
+  }
+
+  $("#sort-choices").addEventListener("click", (e) => {
+    const b = e.target.closest(".choice");
+    if (!b || S.answered) return;
+    S.answered = true;
+    const it = S.deck[S.i];
+    const right = S.mode === "kind" ? it.k : (it.proper ? "proper" : "common");
+    const ok = b.dataset.v === right;
+    $$("#sort-choices .choice").forEach((c) => {
+      c.disabled = true;
+      if (c.dataset.v === right) c.classList.add("correct");
+      else if (c === b) c.classList.add("incorrect");
+    });
+    if (ok) S.score++;
+    S.results[S.i] = ok;
+    dots($("#sort-dots"), S_ROUNDS, S.results, -1);
+    $("#sort-count").textContent = `Word ${S.i + 1} of ${S_ROUNDS} · Score ${S.score}`;
+    let msg;
+    if (S.mode === "kind") {
+      const k = KINDS[it.k];
+      msg = `${ok ? "Yes." : "Not this one."} ${q(it.w)} is ${article(k.label.toLowerCase())}: ${k.hint}.`;
+    } else {
+      $("#sort-word").textContent = it.show;
+      $("#sort-label").textContent = it.proper ? "Proper noun" : "Common noun";
+      msg = it.proper
+        ? `${ok ? "Yes." : "Not this one."} ${q(it.show)} names one particular ${it.label}, so it is proper and starts with a capital letter.`
+        : `${ok ? "Yes." : "Not this one."} ${q(it.show)} could be any ${it.label}. It is common, so it needs no capital letter.`;
+    }
+    const fb = $("#sort-feedback");
+    fb.className = "feedback " + (ok ? "good" : "bad");
+    fb.textContent = msg;
+    const next = $("#sort-next");
+    next.textContent = S.i + 1 < S_ROUNDS ? "Next word" : "See my score";
+    next.hidden = false; next.focus();
+  });
+
+  $("#sort-next").addEventListener("click", () => {
+    S.i++;
+    if (S.i >= S_ROUNDS) finish($("#sort-stage"), $("#sort-end"), "sort-" + S.mode, S.score, S_ROUNDS, "words", sortStart);
+    else sortRound();
+  });
+  $("#sort-say").addEventListener("click", () => { const it = S.deck[S.i]; say(it.show || it.w); });
+
+  function setSortMode(mode) {
+    S.mode = mode;
+    $$("#sort [data-sort]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.sort === mode)));
+    sortStart();
+  }
+  $$("#sort [data-sort]").forEach((b) => b.addEventListener("click", () => setSortMode(b.dataset.sort)));
+
+  // ---------- Plurals ----------
+  const P = { deck: [], i: 0, score: 0, results: [], answered: false };
+
+  function pluralStart() {
+    P.deck = shuffle(PLURALS).slice(0, P_ROUNDS);
+    P.i = 0; P.score = 0; P.results = [];
+    $("#plural-end").hidden = true; $("#plural-stage").hidden = false;
+    pluralRound();
+  }
+
+  function pluralRound() {
+    P.answered = false;
+    const [s, p, w1, w2] = P.deck[P.i];
+    $("#plural-count").textContent = `Word ${P.i + 1} of ${P_ROUNDS} · Score ${P.score}`;
+    dots($("#plural-dots"), P_ROUNDS, P.results, P.i);
+    $("#plural-word").textContent = s;
+    $("#plural-choices").innerHTML = shuffle([p, w1, w2]).map((w) => `<button type="button" class="choice" data-v="${w}">${w}</button>`).join("");
+    const fb = $("#plural-feedback"); fb.textContent = ""; fb.className = "feedback";
+    $("#plural-next").hidden = true;
+  }
+
+  $("#plural-choices").addEventListener("click", (e) => {
+    const b = e.target.closest(".choice");
+    if (!b || P.answered) return;
+    P.answered = true;
+    const [s, p, , , rule] = P.deck[P.i];
+    const ok = b.dataset.v === p;
+    $$("#plural-choices .choice").forEach((c) => {
+      c.disabled = true;
+      if (c.dataset.v === p) c.classList.add("correct");
+      else if (c === b) c.classList.add("incorrect");
+    });
+    if (ok) P.score++;
+    P.results[P.i] = ok;
+    dots($("#plural-dots"), P_ROUNDS, P.results, -1);
+    $("#plural-count").textContent = `Word ${P.i + 1} of ${P_ROUNDS} · Score ${P.score}`;
+    const fb = $("#plural-feedback");
+    fb.className = "feedback " + (ok ? "good" : "bad");
+    fb.textContent = `${ok ? "Yes." : "Not this one."} One ${s}, two ${p}. ${RULES[rule]}`;
+    const next = $("#plural-next");
+    next.textContent = P.i + 1 < P_ROUNDS ? "Next word" : "See my score";
+    next.hidden = false; next.focus();
+  });
+
+  $("#plural-next").addEventListener("click", () => {
+    P.i++;
+    if (P.i >= P_ROUNDS) finish($("#plural-stage"), $("#plural-end"), "plural", P.score, P_ROUNDS, "plurals", pluralStart);
+    else pluralRound();
+  });
+  $("#plural-say").addEventListener("click", () => say(P.deck[P.i][0]));
+
+  // ---------- Tabs ----------
+  const TABS = ["learn", "hunt", "sort", "plurals"];
+  function showTab(name) {
+    $$(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+    TABS.forEach((t) => ($("#" + t).hidden = t !== name));
+    store.tab = name; persist();
+  }
+  $$(".tab").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+  $$("[data-go]").forEach((b) => b.addEventListener("click", () => {
+    const go = b.dataset.go, mode = b.dataset.mode;
+    if (go === "hunt") setHuntLevel(mode);
+    else if (go === "sort") setSortMode(mode);
+    else if (go === "plurals") pluralStart();
+    showTab(go);
+    window.scrollTo({ top: 0 });
+  }));
+
+  // ---------- Start ----------
+  huntStart(); sortStart(); pluralStart(); updateTally();
+  const fromHash = location.hash.slice(1);
+  showTab(TABS.includes(fromHash) ? fromHash : TABS.includes(store.tab) ? store.tab : "hunt");
+})();
+</script>
+</body>
+</html>
